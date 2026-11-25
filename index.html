@@ -1,0 +1,461 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIX GACHA</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#090b12;color:#fff;
+ font-family:Arial,"Noto Sans JP",sans-serif;
+}
+header{
+ height:65px;padding:0 22px;display:flex;
+ align-items:center;justify-content:space-between;
+ background:#101522;border-bottom:1px solid #252c40;
+ position:sticky;top:0;z-index:10;
+}
+.logo{font-size:21px;font-weight:900;letter-spacing:2px}
+.logo span{color:#8b83ff}
+.balance{
+ background:#202941;padding:10px 15px;
+ border-radius:10px;color:#f7d66b;font-weight:bold;
+}
+nav{
+ display:flex;gap:8px;padding:12px;
+ justify-content:center;background:#0d111c;
+ border-bottom:1px solid #20283b;
+}
+nav button{
+ background:transparent;color:#8995ad;
+ border:0;padding:10px 15px;cursor:pointer;
+ border-radius:8px;font-size:13px;
+}
+nav button.active{background:#293453;color:white}
+main{max-width:850px;margin:25px auto;padding:0 15px}
+.page{display:none}
+.page.active{display:block}
+.banner{
+ min-height:220px;border-radius:18px;padding:30px;
+ display:flex;flex-direction:column;justify-content:center;
+ align-items:center;text-align:center;
+ background:
+ radial-gradient(ellipse at center,#483a91 0%,#171b39 45%,#101522 100%);
+ border:1px solid #514b91;
+ position:relative;overflow:hidden;
+}
+.banner:before{
+ content:"";position:absolute;width:300px;height:300px;
+ border:1px solid #ffffff20;border-radius:50%;
+ box-shadow:0 0 70px #9384ff50;
+}
+.banner h1{font-size:34px;letter-spacing:5px;margin:0;z-index:1}
+.banner p{color:#c2c5e6;z-index:1;font-size:13px}
+.banner small{color:#f5d76e;letter-spacing:3px;z-index:1}
+.section-title{font-size:17px;margin:27px 0 14px}
+.gacha-box{
+ margin-top:18px;background:#121827;
+ border:1px solid #29334b;border-radius:16px;padding:22px;
+ text-align:center;
+}
+.rate{
+ display:flex;justify-content:center;gap:12px;
+ flex-wrap:wrap;margin:15px 0;color:#aeb9d0;font-size:12px;
+}
+.rate b{color:white}
+.buttons{display:flex;gap:12px;justify-content:center;margin-top:20px}
+.gacha-btn{
+ border:0;border-radius:10px;padding:15px 25px;
+ font-size:15px;font-weight:bold;cursor:pointer;
+ color:white;background:linear-gradient(120deg,#6554df,#a34cda);
+ box-shadow:0 5px 20px #7856d455;
+}
+.gacha-btn.secondary{background:#26334f;box-shadow:none}
+button:disabled{opacity:.4;cursor:not-allowed}
+.sub{font-size:11px;color:#8592aa;margin-top:12px}
+.cards{
+ display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+}
+.item{
+ min-height:145px;border-radius:12px;padding:13px;
+ display:flex;flex-direction:column;align-items:center;
+ justify-content:center;text-align:center;
+ background:#171e30;border:1px solid #303b55;
+}
+.item .emoji{font-size:37px;margin-bottom:10px}
+.item .name{font-size:13px;font-weight:bold}
+.item .rarity{font-size:11px;margin-top:6px}
+.N{color:#a5afbd}.R{color:#59b8ff}
+.SR{color:#b28aff}.SSR{color:#ffcf5b}
+.UR{color:#ff6fbd}
+#overlay{
+ display:none;position:fixed;inset:0;z-index:30;
+ background:#050711f5;align-items:center;
+ justify-content:center;flex-direction:column;padding:20px;
+}
+#overlay.show{display:flex}
+#effectTitle{font-size:25px;font-weight:900;letter-spacing:4px}
+#effectDesc{color:#aeb9d0;font-size:13px;margin:12px}
+#resultCards{
+ display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+ gap:8px;width:100%;max-width:650px;margin:25px auto;
+}
+.result-card{
+ background:#182139;border:1px solid #4d5b7d;
+ border-radius:12px;min-height:125px;
+ display:flex;flex-direction:column;align-items:center;
+ justify-content:center;text-align:center;
+ animation:appear .45s both;
+ padding:8px;
+}
+.result-card .emoji{font-size:30px}
+.result-card .name{font-size:11px;margin-top:8px}
+.result-card .rarity{font-size:10px;margin-top:5px}
+@keyframes appear{
+ from{opacity:0;transform:translateY(20px) scale(.8)}
+ to{opacity:1;transform:translateY(0) scale(1)}
+}
+.flash{animation:flash .8s ease}
+@keyframes flash{
+ 0%{box-shadow:0 0 0 transparent}
+ 50%{box-shadow:0 0 100px #b18aff}
+ 100%{box-shadow:0 0 0 transparent}
+}
+#historyList{display:flex;flex-direction:column;gap:9px}
+.history{
+ background:#151c2b;border:1px solid #28344c;
+ border-radius:10px;padding:13px;
+ display:flex;justify-content:space-between;
+ font-size:12px;gap:10px;
+}
+.empty{text-align:center;padding:45px;color:#69758d;font-size:13px}
+.info{
+ background:#151d30;padding:16px;border-radius:12px;
+ color:#aebbd3;font-size:12px;line-height:2;
+}
+@media(max-width:550px){
+ .cards{grid-template-columns:repeat(2,1fr)}
+ #resultCards{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .result-card{min-height:105px}
+ .banner h1{font-size:26px}
+ .buttons{gap:8px}
+ .gacha-btn{padding:14px 15px;font-size:13px}
+ nav{gap:0}
+ nav button{padding:10px 11px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<header>
+ <div class="logo">MIX <span>GACHA</span></div>
+ <div class="balance">✦ <span id="points">3000</span> PT</div>
+</header>
+
+<nav>
+ <button class="active" onclick="changePage('home',this)">ガチャ</button>
+ <button onclick="changePage('collection',this)">図鑑</button>
+ <button onclick="changePage('history',this)">履歴</button>
+ <button onclick="changePage('info',this)">詳細</button>
+</nav>
+
+<main>
+<section id="home" class="page active">
+ <div class="banner">
+  <small>LIMITLESS RANDOM</small>
+  <h1>MIX GACHA</h1>
+  <p>何が出るかは、引いてからのお楽しみ。</p>
+ </div>
+
+ <div class="gacha-box">
+  <div style="color:#f4d66d;font-size:12px;letter-spacing:3px">SPECIAL GACHA</div>
+  <h2>ミックスガチャ</h2>
+  <p style="font-size:12px;color:#8997b3">カード・武器・アイテム・キャラクター</p>
+
+  <div class="rate">
+   <span><b class="UR">UR</b> 1%</span>
+   <span><b class="SSR">SSR</b> 5%</span>
+   <span><b class="SR">SR</b> 14%</span>
+   <span><b class="R">R</b> 30%</span>
+   <span><b class="N">N</b> 50%</span>
+  </div>
+
+  <div class="buttons">
+   <button class="gacha-btn" onclick="draw(1)">1回引く<br><small>100 PT</small></button>
+   <button class="gacha-btn secondary" onclick="draw(10)">10連ガチャ<br><small>900 PT</small></button>
+  </div>
+  <div class="sub">10連はSR以上1個確定 / 無料ポイント制</div>
+ </div>
+
+ <h3 class="section-title">無料ポイント</h3>
+ <div class="info">
+  毎日1回、500 PTを受け取れます。
+  <br>
+  <button class="gacha-btn secondary" style="margin-top:10px" onclick="dailyBonus()">500 PT 受け取る</button>
+ </div>
+
+ <h3 class="section-title">レアリティ</h3>
+ <div class="cards">
+  <div class="item"><div class="emoji">⚪</div><b class="N">NORMAL</b><div class="rarity">N</div></div>
+  <div class="item"><div class="emoji">🔵</div><b class="R">RARE</b><div class="rarity">R</div></div>
+  <div class="item"><div class="emoji">🟣</div><b class="SR">SUPER RARE</b><div class="rarity">SR</div></div>
+  <div class="item"><div class="emoji">🟡</div><b class="SSR">SUPER SSR</b><div class="rarity">SSR</div></div>
+  <div class="item"><div class="emoji">🌈</div><b class="UR">ULTRA RARE</b><div class="rarity">UR</div></div>
+ </div>
+</section>
+
+<section id="collection" class="page">
+ <h2>アイテム図鑑</h2>
+ <p class="sub">入手したアイテムが登録されます。</p>
+ <div id="collectionCards" class="cards"></div>
+</section>
+
+<section id="history" class="page">
+ <h2>ガチャ履歴</h2>
+ <div id="historyList"></div>
+</section>
+
+<section id="info" class="page">
+ <h2>ガチャ詳細</h2>
+ <div class="info">
+  <b>排出確率</b><br>
+  UR：1%<br>
+  SSR：5%<br>
+  SR：14%<br>
+  R：30%<br>
+  N：50%<br><br>
+  <b>ガチャ料金</b><br>
+  1回：100 PT<br>
+  10回：900 PT<br><br>
+  <b>10連保証</b><br>
+  10連の中にSR以上がない場合、最後の1枠がSR以上になります。<br><br>
+  <b>ポイント</b><br>
+  初期ポイント：3000 PT<br>
+  毎日ログイン：500 PT<br><br>
+  <b>データ保存</b><br>
+  このブラウザのローカルストレージに保存されます。
+ </div>
+</section>
+</main>
+
+<div id="overlay">
+ <div id="effectTitle">SUMMONING...</div>
+ <div id="effectDesc">運命の瞬間</div>
+ <div id="resultCards"></div>
+ <button class="gacha-btn" onclick="closeResult()">結果を確認する</button>
+</div>
+
+<script>
+const items=[
+ {name:"木の剣",emoji:"🗡️",rarity:"N"},
+ {name:"石の斧",emoji:"🪓",rarity:"N"},
+ {name:"銅のコイン",emoji:"🪙",rarity:"N"},
+ {name:"回復ポーション",emoji:"🧪",rarity:"N"},
+ {name:"スライム",emoji:"🟢",rarity:"N"},
+ {name:"鉄の剣",emoji:"⚔️",rarity:"R"},
+ {name:"魔法の本",emoji:"📖",rarity:"R"},
+ {name:"銀の盾",emoji:"🛡️",rarity:"R"},
+ {name:"炎の弓",emoji:"🏹",rarity:"R"},
+ {name:"宝箱",emoji:"🎁",rarity:"R"},
+ {name:"雷神の槍",emoji:"🔱",rarity:"SR"},
+ {name:"伝説の指輪",emoji:"💍",rarity:"SR"},
+ {name:"ドラゴン",emoji:"🐉",rarity:"SR"},
+ {name:"魔導士",emoji:"🧙",rarity:"SR"},
+ {name:"聖なる鎧",emoji:"✨",rarity:"SR"},
+ {name:"神話の剣",emoji:"⚡",rarity:"SSR"},
+ {name:"黄金の王冠",emoji:"👑",rarity:"SSR"},
+ {name:"天使",emoji:"👼",rarity:"SSR"},
+ {name:"幻獣フェニックス",emoji:"🔥",rarity:"SSR"},
+ {name:"時空の支配者",emoji:"🌌",rarity:"UR"},
+ {name:"創世の宝石",emoji:"💎",rarity:"UR"},
+ {name:"宇宙龍",emoji:"🐲",rarity:"UR"}
+];
+
+const rates=[
+ {rarity:"N",weight:50},
+ {rarity:"R",weight:30},
+ {rarity:"SR",weight:14},
+ {rarity:"SSR",weight:5},
+ {rarity:"UR",weight:1}
+];
+
+let points=Number(localStorage.getItem("mix_points")??3000);
+let history=JSON.parse(localStorage.getItem("mix_history")||"[]");
+let collection=JSON.parse(localStorage.getItem("mix_collection")||"{}");
+let lastResults=[];
+
+function save(){
+ localStorage.setItem("mix_points",points);
+ localStorage.setItem("mix_history",JSON.stringify(history));
+ localStorage.setItem("mix_collection",JSON.stringify(collection));
+ update();
+}
+
+function update(){
+ document.getElementById("points").textContent=points.toLocaleString();
+}
+
+function changePage(id,btn){
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+ btn.classList.add("active");
+ if(id==="collection")renderCollection();
+ if(id==="history")renderHistory();
+}
+
+function getRarity(){
+ let n=Math.random()*100;
+ let total=0;
+ for(const r of rates){
+  total+=r.weight;
+  if(n<total)return r.rarity;
+ }
+ return "N";
+}
+
+function getItem(rarity){
+ const pool=items.filter(i=>i.rarity===rarity);
+ return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function draw(count){
+ const cost=count===10?900:100;
+ if(points<cost){
+  alert("ポイントが足りません！");
+  return;
+ }
+ points-=cost;
+ let results=[];
+ for(let i=0;i<count;i++){
+  results.push(getItem(getRarity()));
+ }
+ if(count===10&&!results.some(i=>["SR","SSR","UR"].includes(i.rarity))){
+  results[9]=getItem("SR");
+ }
+ results.forEach(item=>{
+  collection[item.name]=(collection[item.name]||0)+1;
+ });
+ history.unshift({
+  date:new Date().toLocaleString("ja-JP"),
+  count:count,
+  results:results
+ });
+ history=history.slice(0,100);
+ save();
+ showAnimation(results);
+}
+
+function showAnimation(results){
+ lastResults=results;
+ const overlay=document.getElementById("overlay");
+ const title=document.getElementById("effectTitle");
+ const desc=document.getElementById("effectDesc");
+ const cards=document.getElementById("resultCards");
+ cards.innerHTML="";
+ overlay.classList.add("show");
+
+ const highest=results.reduce((a,b)=>
+  rates.findIndex(r=>r.rarity===a.rarity)>
+  rates.findIndex(r=>r.rarity===b.rarity)?a:b
+ );
+ const rarity=highest.rarity;
+
+ if(rarity==="UR"){
+  title.textContent="RAINBOW BURST";
+  desc.textContent="🌈 ULTRA RARE 確定演出";
+ }else if(rarity==="SSR"){
+  title.textContent="GOLDEN IMPACT";
+  desc.textContent="✨ SUPER SSR 出現！";
+ }else if(rarity==="SR"){
+  title.textContent="SPECIAL SUMMON";
+  desc.textContent="特別なアイテムが出現！";
+ }else{
+  title.textContent="SUMMONING";
+  desc.textContent="召喚完了！";
+ }
+
+ overlay.classList.add("flash");
+ setTimeout(()=>overlay.classList.remove("flash"),900);
+
+ results.forEach((item,index)=>{
+  const card=document.createElement("div");
+  card.className="result-card";
+  card.style.animationDelay=(index*.12)+"s";
+  card.innerHTML=`
+   <div class="emoji">${item.emoji}</div>
+   <div class="name">${item.name}</div>
+   <div class="rarity ${item.rarity}">${item.rarity}</div>
+  `;
+  cards.appendChild(card);
+ });
+}
+
+function closeResult(){
+ document.getElementById("overlay").classList.remove("show");
+}
+
+function dailyBonus(){
+ const today=new Date().toLocaleDateString("ja-JP");
+ if(localStorage.getItem("mix_daily")===today){
+  alert("本日のポイントは受け取り済みです！");
+  return;
+ }
+ points+=500;
+ localStorage.setItem("mix_daily",today);
+ save();
+ alert("500 PTを受け取りました！");
+}
+
+function renderCollection(){
+ const area=document.getElementById("collectionCards");
+ area.innerHTML="";
+ const obtained=items.filter(i=>collection[i.name]);
+ items.forEach(item=>{
+  const count=collection[item.name]||0;
+  const div=document.createElement("div");
+  div.className="item";
+  if(count){
+   div.innerHTML=`
+    <div class="emoji">${item.emoji}</div>
+    <div class="name">${item.name}</div>
+    <div class="rarity ${item.rarity}">${item.rarity}</div>
+    <div class="sub">所持数：${count}</div>`;
+  }else{
+   div.innerHTML=`
+    <div class="emoji">❔</div>
+    <div class="name">？？？</div>
+    <div class="rarity">未入手</div>`;
+  }
+  area.appendChild(div);
+ });
+}
+
+function renderHistory(){
+ const area=document.getElementById("historyList");
+ area.innerHTML="";
+ if(!history.length){
+  area.innerHTML='<div class="empty">まだガチャ履歴がありません。</div>';
+  return;
+ }
+ history.forEach(h=>{
+  const div=document.createElement("div");
+  div.className="history";
+  const result=h.results.map(i=>i.emoji+" "+i.name).join(" / ");
+  div.innerHTML=`
+   <div>
+    <b>${h.count}連ガチャ</b>
+    <div class="sub">${h.date}</div>
+    <div style="margin-top:8px;color:#b9c7e8">${result}</div>
+   </div>
+   <span style="color:#f5d76e">DONE</span>`;
+  area.appendChild(div);
+ });
+}
+
+update();
+</script>
+</body>
+</html>
